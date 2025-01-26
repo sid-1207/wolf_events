@@ -1,0 +1,106 @@
+<%= form_with(model: event) do |form| %>
+  <% if event.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(event.errors.count, "error") %> prohibited this event from being saved:</h2>
+
+      <ul>
+        <% event.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <span style="color: red;"><b>NOTE: To create a future event, make an event post current UTC Time : <%= Time.current%></b></span><br><br>
+  <div>
+    <%= form.label :event_name, style: "display: block" %>
+    <%= form.text_field :event_name %>
+  </div>
+
+  <div>
+    <%= form.label :event_category, style: "display: block" %>
+    <%= form.select :event_category, ['Concert', 'Sport', 'Arts & Theatre', 'Miscellaneous'] %>
+  </div>
+
+  <div>
+    <%= form.label :event_date, style: "display: block" %>
+    <%= form.date_field :event_date, id: "event_date", min: Time.current.utc.to_date%>
+  </div>
+  <div>
+    <%= form.label :event_start_time, style: "display: block" %>
+    <%= form.time_field :event_start_time, id: "event_start_time"%>
+  </div>
+
+  <div>
+    <%= form.label :event_end_time, style: "display: block" %>
+    <%= form.time_field :event_end_time, id: "event_end_time" %>
+  </div>
+
+  <div>
+    <%= form.label :ticket_price, style: "display: block" %>
+    <%= form.number_field :ticket_price, step: 'any' %>
+  </div>
+
+  <div>
+    <%= form.label :number_of_seats_left, style: "display: block" %>
+    <%= form.number_field :number_of_seats_left %>
+  </div>
+
+
+  <div>
+    <%= form.label :room_id, style: "display: block" %>
+    <%= form.select :room_id, [], {}, id: 'room_id' %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+
+<% end %>
+<script>
+    var eventDateField = document.getElementById("event_date");
+    var eventStartTimeField = document.getElementById("event_start_time");
+    var eventEndTimeField = document.getElementById("event_end_time");
+    var roomIDSelect = document.getElementById("room_id");
+
+    // Add event listeners to the form fields
+    // Get references to the form fields
+    // Function to log event date to the console
+    eventDateField.addEventListener("change", logFieldChange);
+    eventStartTimeField.addEventListener("change", logFieldChange);
+    eventEndTimeField.addEventListener("change", logFieldChange);
+    var given_date;
+    var given_start_time;
+    var given_end_time;
+    function logFieldChange(event) {
+        var fieldName = event.target.name;
+        var fieldValue = event.target.value;
+        if (fieldName=="event[event_date]")
+            given_date=fieldValue;
+        if (fieldName=="event[event_start_time]")
+            given_start_time=fieldValue;
+        if (fieldName=="event[event_end_time]")
+            given_end_time=fieldValue;
+
+        var xhr = new XMLHttpRequest();
+        var url = "<%= available_rooms_path %>?date=" + encodeURIComponent(given_date) + "&start_time=" + encodeURIComponent(given_start_time) + "&end_time=" + encodeURIComponent(given_end_time);
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var rooms = JSON.parse(xhr.responseText);
+                // Clear existing options
+                roomIDSelect.innerHTML = "";
+
+                // Add new options based on the events data
+                rooms.forEach(function(room) {
+                    var option = document.createElement("option");
+                    option.text = room.room_location;
+                    option.value = room.id;
+                    roomIDSelect.add(option);
+                });
+            }
+        };
+        xhr.send();
+    }
+
+</script>

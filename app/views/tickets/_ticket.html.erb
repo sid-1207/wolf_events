@@ -1,0 +1,41 @@
+<div id="<%= dom_id ticket %>">
+  <p>
+    <strong>Confirmation number:</strong>
+    <%= ticket.confirmation_number %>
+  </p>
+
+  <p>
+    <strong>Room:</strong>
+    <%= ticket.room.room_location %>
+  </p>
+
+  <p>
+    <strong>Event:</strong>
+    <%= ticket.event.event_name %>
+  </p>
+
+  <p>
+    <strong>Booked By:</strong>
+    <%= ticket.user.name %>
+  </p>
+  <p>
+    <strong>Belongs to:</strong>
+    <%if !User.find_by_id(ticket.belongs_to).nil? %>
+      <%= User.find_by_id(ticket.belongs_to).name %>
+      <%else %>
+      NIL
+    <%end %>
+  </p>
+  <p>
+    <strong>Number of Tickets:</strong>
+    <%= ticket.number_of_tickets %>
+  </p>
+
+  <% event = Event.find(ticket.event_id) %>
+  <% total_price = event.ticket_price * ticket.number_of_tickets %>
+  <p>
+    <strong>Total Price:</strong>
+    <%= number_to_currency(total_price) %>
+  </p>
+
+</div>

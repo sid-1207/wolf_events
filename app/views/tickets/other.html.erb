@@ -1,0 +1,68 @@
+<%= form_with(model: @ticket, url: tickets_path, local: true) do |form| %>
+  <div id="users-data" data-users="<%= User.all.to_json %>"></div>
+
+  <div class="form-group">
+    <%= form.label :user_email_search, "Enter email id:" %>
+    <%= form.text_field :user_email_search, id: 'user_email_search', value: params[:user_email_search], onchange: 'handleEmailSearch()'%>
+  </div>
+  <div class="field">
+    <strong>Event:</strong> <%= @event.event_name %>
+    <%= form.hidden_field :event_id, value: @event.id %>
+  </div>
+  <div class="field">
+    <strong>Booked By:</strong> <%= current_user.name %>
+    <%= form.hidden_field :user_id, value: current_user.id %>
+  </div>
+  <div class="field">
+    <strong>Room:</strong> <%= @room.room_location %>
+    <%= form.hidden_field :room_id, value: @room.id %>
+  </div>
+  <div class="field">
+    <strong>Credit Card:</strong> <%= current_user.credit_card_information %>
+  </div>
+  <div class="field">
+    <strong>Price per Ticket:</strong> <%= number_to_currency(@event.ticket_price) %>
+  </div>
+  <div class="field">
+    <% qty = @event.number_of_seats_left %>
+    <%= form.label :quantity %>
+    <%= form.number_field :number_of_tickets, value: 1, :id => 'quantity',min: 1, max: qty, onchange: "calculateTotalPrice();" %>
+  </div>
+  <div class="field">
+    <%= form.label :total_price %>
+    <%= form.text_field :total_price, value: @event.ticket_price,:id => 'total_price', :readonly => true %>
+  </div>
+  <div class="actions">
+    <%= form.submit "Purchase Tickets", id:"submit_button" %>
+  </div>
+<% end %>
+
+<script type="text/javascript">
+    function calculateTotalPrice() {
+        var price = "<%= @event.ticket_price %>";
+        document.getElementById('total_price').value = document.getElementById('quantity').value * price;
+    }
+</script>
+
+
+<script>
+    function handleEmailSearch() {
+
+        const userEmailSearchInput = document.getElementById('user_email_search');
+        const enteredValue = userEmailSearchInput.value;
+        const usersDataDiv = document.getElementById('users-data');
+        const allUsers = JSON.parse(usersDataDiv.getAttribute('data-users'));
+        console.log('All Users:', allUsers);
+        const userFound = allUsers.some(user => user.email === enteredValue);
+        if (!userFound) {
+            alert('User with entered email not found');
+            document.getElementById('submit_button').disabled = true;
+        }
+        else
+        {
+            document.getElementById('submit_button').disabled = false;
+        }
+    }
+</script>
+
+

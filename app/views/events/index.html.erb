@@ -1,0 +1,205 @@
+<style>
+    table, td, th {
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 15px;
+    }
+</style>
+<p style="color: green"><%= notice %></p>
+<div style="display: flex; align-items: center;">
+  <h1 style="margin-right: 10px;">Events</h1>
+  <%if current_user.is_admin? %>
+    <%= link_to "New event", new_event_path, class: "btn btn-primary" %>
+  <%end %>
+</div>
+
+<%= form_tag events_path, method: :get, id: "filterForm" do %>
+  <div style="display: flex; align-items: center;">
+    <div style="margin-right: 10px;">
+      <%= label_tag :name, "Search Name:" %>
+      <%= text_field_tag :name, nil, id: "name",value: params[:name] %>
+
+    </div>
+    <div style="margin-right: 10px;">
+      <%= label_tag :category, "Category:" %>
+      <%= select_tag :category, options_for_select([['All', ''], ['Concert', 'Concert'], ['Sport', 'Sport'], ['Arts & Theatre', 'Arts & Theatre'], ['Miscellaneous', 'Miscellaneous']]), id: "category" %>
+    </div>
+
+    <div style="margin-right: 10px;">
+      <%= label_tag :date, "Date:" %>
+      <%= date_field_tag :date, id: "date",value: params[:date] %>
+    </div>
+
+    <div style="margin-right: 10px;">
+      <%= label_tag :minPrice, "Min Price:" %>
+      <%= number_field_tag :minPrice, id: "minPrice", value: params[:minPrice]%>
+    </div>
+
+    <div style="margin-right: 10px;">
+      <%= label_tag :maxPrice, "Max Price:" %>
+      <%= number_field_tag :maxPrice, id: "maxPrice",value: params[:maxPrice] %>
+    </div>
+    <%= submit_tag "Filter" %>
+  </div>
+<% end %>
+<%= link_to 'Clear Filter', events_path, class: 'btn btn-secondary' %><br><br>
+<div id="events">
+  <table>
+    <thead>
+    <tr>
+      <th>Event Name</th>
+      <th>Event Category</th>
+      <th>Event Date</th>
+      <th>Event Start Time</th>
+      <th>Event End Time</th>
+      <th>Ticket Price</th>
+      <th>Seats Left</th>
+      <th>Room</th>
+      <!-- Add more table headers as needed -->
+    </tr>
+    </thead>
+    <tbody>
+    <% @events.each do |event| %>
+      <% if current_user.is_admin %>
+
+        <tr>
+          <td><%= event.event_name %></td>
+          <td><%= event.event_category %></td>
+          <td><%= event.event_date%></td>
+          <td><%= event.event_start_time.strftime('%H:%M') %></td>
+          <td><%= event.event_end_time.strftime('%H:%M') %></td>
+          <td><%= event.ticket_price %></td>
+          <td><%= event.number_of_seats_left %></td>
+          <td><%= Room.find(event.room_id).room_location%></td>
+          <td colspan="2">
+            <%= link_to "Show", event %>
+          </td>
+
+      <% else %>
+        <% event_date = event.event_date %>
+        <% current_date = Time.current.utc.to_date  %>
+        <% event_time = event.event_start_time.strftime("%H:%M") %>
+        <% current_time = Time.current.strftime("%H:%M") %>
+        <% if (event.number_of_seats_left > 0) && ((event_date > current_date) || (event_date == current_date && event_time > current_time)) %>
+          <tr>
+            <td><%= event.event_name %></td>
+            <td><%= event.event_category %></td>
+            <td><%= event.event_date.strftime('%Y-%m-%d') %></td>
+            <td><%= event.event_start_time.strftime('%H:%M') %></td>
+            <td><%= event.event_end_time.strftime('%H:%M') %></td>
+            <td><%= event.ticket_price %></td>
+            <td><%= event.number_of_seats_left %></td>
+            <td><%= Room.find(event.room_id).room_location%></td>
+            <td colspan="2">
+              <%= link_to "Show", event %>
+            </td>
+          </tr>
+        <% else %>
+
+        <% end %>
+      <% end %>
+    <% end %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("filterForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            // Collect filter criteria
+            var category = document.getElementById("category").value;
+            var date = document.getElementById("date").value;
+            var minPrice = document.getElementById("minPrice").value;
+            var maxPrice = document.getElementById("maxPrice").value;
+            var name = document.getElementById("name").value;
+
+            // Send AJAX request to fetch filtered events
+            var xhr = new XMLHttpRequest();
+            var url = "<%= events_path %>?category=" + encodeURIComponent(category) + "&date=" + encodeURIComponent(date) + "&min_price=" + encodeURIComponent(minPrice) + "&max_price=" + encodeURIComponent(maxPrice)+ "&name=" + encodeURIComponent(name);
+            xhr.open("GET", url, true);
+            xhr.setRequestHeader("Accept", "application/json");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var events = JSON.parse(xhr.responseText);
+                    var eventsHTML = "<table>" +
+                      "<thead>" +
+                      "<tr>" +
+                      "<th>Event Name</th>" +
+                      "<th>Event Category</th>" +
+                      "<th>Event Date</th>" +
+                      "<th>Event Start Time</th>" +
+                      "<th>Event End Time</th>" +
+                      "<th>Ticket Price</th>" +
+                      "<th>Seats Left</th>" +
+                      "<th>Room</th>" +
+                      "<!-- Add more table headers as needed -->" +
+                      "</tr>" +
+                      "</thead>" +
+                      "<tbody>";
+
+                    events.forEach(function(event) {
+                        if (current_user.is_admin)
+                        {
+                            var eventHTML = "<tr>" +
+                              "<td>" + event.event_name + "</td>" +
+                              "<td>" + event.event_date + "</td>" +
+                              "<td>" + event.event_category + "</td>" +
+                              "<td>" + event.event_start_time + "</td>" +
+                              "<td>" + event.event_end_time + "</td>" +
+                              "<td>" + event.ticket_price + "</td>" +
+                              "<td>" + event.number_of_seats_left + "</td>" +
+                              "<td>" + Room.find(event.room_id).room_location + "</td>" +
+                              "<td colspan='2'>" +
+                              "<a href='/events/" + event.id + "'>Show this event</a>" +
+                              "</td>" +
+                              "</tr>";
+                        }
+                        else
+                        {
+                            var event_date = event.event_date;
+                            var current_date = Time.current.utc.to_date
+                            var event_time = event.event_start_time.strftime("%H:%M")
+                            var current_time = Time.current.strftime("%H:%M")
+                            if((event.number_of_seats_left > 0) && ((event_date > current_date) || (event_date == current_date && event_time > current_time)))
+                            {
+                                var eventHTML = "<tr>" +
+                                  "<td>" + event.event_name + "</td>" +
+                                  "<td>" + event.event_date + "</td>" +
+                                  "<td>" + event.event_category + "</td>" +
+                                  "<td>" + event.event_start_time + "</td>" +
+                                  "<td>" + event.event_end_time + "</td>" +
+                                  "<td>" + event.ticket_price + "</td>" +
+                                  "<td>" + event.number_of_seats_left + "</td>" +
+                                  "<td>" + Room.find(event.room_id).room_location + "</td>" +
+                                  "<td colspan='2'>" +
+                                  "<a href='/events/" + event.id + "'>Show this event</a>" +
+                                  "</td>" +
+                                  "</tr>";
+                            }
+                            else
+                            {}
+                        }
+
+                        eventsHTML += eventHTML;
+                    });
+
+                    eventsHTML += "</tbody>" +
+                      "</table>";
+
+                    document.getElementById("events").innerHTML = eventsHTML;
+                }
+            };
+            xhr.send();
+
+        });
+    });
+</script>

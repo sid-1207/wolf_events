@@ -1,0 +1,11 @@
+<h1>Editing user</h1>
+
+<%= render "form", user: @user %>
+
+<br>
+
+<div>
+  <%# unless !current_user.is_admin? %>
+    <%= link_to "Back to my profile", profile_path %>
+  <%# end %>
+</div>

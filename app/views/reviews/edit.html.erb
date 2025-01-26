@@ -1,0 +1,11 @@
+<h1>Editing review</h1>
+
+<%= render "form", review: @review %>
+
+<br>
+
+<div>
+  <%= button_to "Destroy this review", @review, method: :delete %>
+  <%= link_to "Show this review", @review %> 
+
+</div>
